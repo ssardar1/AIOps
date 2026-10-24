@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Signal — Prometheus demo</title>
+<style>
+:root{color-scheme:dark;font-family:Inter,system-ui,sans-serif;background:#0b1220;color:#e8eef8}*{box-sizing:border-box}body{margin:0}main{max-width:1080px;margin:auto;padding:40px 24px}nav{display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid #243047;padding-bottom:24px}.brand{font-weight:800;font-size:24px}.badge{color:#77e3b1;background:#102e29;border:1px solid #245647;border-radius:30px;padding:8px 14px;font-size:13px}h1{font-size:clamp(32px,6vw,54px);letter-spacing:-2px;margin-bottom:14px}p{color:#a6b4cb;line-height:1.7}.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:18px;margin:32px 0}.card{background:#121d30;border:1px solid #28354b;border-radius:16px;padding:24px}.label{color:#9caec8;font-size:14px}.value{font-size:38px;font-weight:700;margin:16px 0}.small{font-size:13px;color:#9caec8}button,.link{display:inline-block;padding:12px 18px;border:0;border-radius:8px;background:#82b3ff;color:#0a172c;font-weight:700;text-decoration:none;cursor:pointer}button:disabled{opacity:.5}a{color:#a7caff}code{font-family:monospace;color:#a7caff;overflow-wrap:anywhere}pre{white-space:pre-wrap;margin-bottom:0}.row{display:flex;gap:12px;align-items:center;flex-wrap:wrap}#notice{min-height:24px}footer{margin-top:36px;color:#7589a6;font-size:13px}
+</style>
+</head>
+<body><main>
+<nav><span class="brand">◉ Signal</span><span class="badge" id="status">Connecting to app…</span></nav>
+<h1>A little traffic.<br>A lot of visibility.</h1>
+<p>A working sample app instrumented for Prometheus. Run demo jobs, then scrape the metrics to explore request rates and latency.</p>
+<div class="grid">
+<section class="card"><div class="label">Completed demo jobs</div><div class="value" id="jobs">—</div><div class="small">Live application counter · updates every 5s</div></section>
+<section class="card"><div class="label">Metrics endpoint</div><div class="value" style="font-size:28px">/metrics</div><div class="small">Prometheus exposition format</div></section>
+<section class="card"><div class="label">Suggested scrape interval</div><div class="value">5<span style="font-size:20px"> sec</span></div><div class="small">Configured in prometheus.yml</div></section>
+</div>
+<section class="card"><h2>Generate a signal</h2><p>Each click completes one demo job and increments <code>demo_jobs_total</code>. All application requests also record a counter and duration histogram.</p><div class="row"><button id="run">Run demo job →</button><a href="/metrics" target="_blank" rel="noopener">View raw metrics ↗</a></div><p id="notice" role="status" aria-live="polite"></p></section>
+<div class="grid"><section class="card"><h2>Request rate</h2><p>Use this PromQL query in Prometheus after a few scrapes:</p><pre><code>sum(rate(demo_http_requests_total[5m]))</code></pre></section><section class="card"><h2>95th percentile latency</h2><p>Duration in seconds across application routes:</p><pre><code>histogram_quantile(0.95,
+  sum by (le) (rate(
+    demo_http_request_duration_seconds_bucket[5m]
+  ))
+)</code></pre></section></div>
+<footer>The status above checks this application. Prometheus scrape health is available in Prometheus under Status → Targets.</footer>
+</main><script>
+const statusEl=document.querySelector('#status'), jobs=document.querySelector('#jobs'), button=document.querySelector('#run'), notice=document.querySelector('#notice');
+async function refresh(){try{const r=await fetch('/api/stats');if(!r.ok)throw Error();const data=await r.json();jobs.textContent=data.completed;statusEl.textContent='● Application online';}catch{statusEl.textContent='Application unavailable';}}
+button.addEventListener('click',async()=>{button.disabled=true;try{const r=await fetch('/api/jobs',{method:'POST'});if(!r.ok)throw Error();const data=await r.json();jobs.textContent=data.completed;notice.textContent=data.message+' — metric incremented.';}catch{notice.textContent='Job failed. Please try again.';}finally{button.disabled=false;}});
+refresh();setInterval(refresh,5000);
+</script></body></html>
