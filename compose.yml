@@ -2,7 +2,7 @@ services:
   app:
     build: .
     ports:
-      - '8000:8000'
+      - '8100:8000'
   prometheus:
     image: prom/prometheus:v3.2.1
     volumes:

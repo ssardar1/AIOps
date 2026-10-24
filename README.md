@@ -23,8 +23,8 @@ With Docker and Docker Compose installed:
 docker compose up --build -d
 ```
 
-The app runs on port 8000; Prometheus runs on port 9090. In Prometheus, check **Status → Targets** for `signal-demo`, run jobs on the webpage, and query `demo_jobs_total` or the PromQL examples shown on the page. Allow a few scrape intervals before querying rates.
+The Docker app is available at http://localhost:8100 (host port 8100 maps to container port 8000); Prometheus runs on port 9090. With standalone Homebrew Compose, use `docker-compose up --build -d`. In Prometheus, check **Status → Targets** for `signal-demo`, run jobs on the webpage, and query `demo_jobs_total` or the PromQL examples shown on the page. Allow a few scrape intervals before querying rates.
 
-For an existing Prometheus server, add a scrape target pointing at this application's reachable hostname and port (for example `your-app-host:8000`) with `metrics_path: /metrics`. The supplied `app:8000` target resolves only within Docker Compose.
+For an existing Prometheus server, add a scrape target pointing at this application's reachable hostname and port (for example `your-app-host:8100` for this Docker deployment) with `metrics_path: /metrics`. The supplied `app:8000` target resolves only within Docker Compose.
 
 Metrics are held in memory and reset when the app restarts. Keep one Gunicorn worker: multiple workers require Prometheus multiprocess configuration. No credentials or external services are needed for the app itself. This is a development demo; restrict access and add authentication before exposing it publicly. Polls of `/api/stats` count as HTTP traffic; scrapes of `/metrics` are excluded.
